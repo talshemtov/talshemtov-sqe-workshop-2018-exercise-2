@@ -161,7 +161,10 @@ let ifStatement = function ifStatement(parsedCode) {
     }
     if (parsedCode.alternate != undefined) {
         isElse = true;
-        line++;
+        if (parsedCode.alternate.type === 'BlockStatement') {
+            line++;
+        }
+        // line++;
         blockStatement([parsedCode.alternate]);
     }
 };

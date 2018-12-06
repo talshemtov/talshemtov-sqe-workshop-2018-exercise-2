@@ -16,9 +16,10 @@ let startSymbolicSub = function(unparsedCode, parsedForTable) {
     let lastValidLine = 0;
     for(let i=0; i<tmp.length; i++) {
         // tmp[i] = tmp[i].trim();
-        if (tmp[i].trim() === '}') {
-            // toRemove.push(i);
+        if (checkIfOnlyClosingCurlyBrackets(tmp[i].trim()) && i<tmp.length-1) {
+            toRemove.push(i);
             // tmp[lastValidLine] = tmp[lastValidLine] + '}';
+            tmp[i+1] = tmp[i].trim() + tmp[i+1];
         } else if (tmp[i].trim().length === 0) {
             toRemove.push(i);
         } else {
@@ -33,8 +34,18 @@ let startSymbolicSub = function(unparsedCode, parsedForTable) {
     }
     symbolicSub(goodCode, parsedForTable, localParams, goodCode);
     tableAfterSub = parsedForTable;
-    return substitutedFunc(parsedForTable, unparsedCode);
+    return substitutedFunc(parsedForTable, goodCode);
 };
+
+let checkIfOnlyClosingCurlyBrackets = function(string) {
+    for (let i=0; i<string.length; i++) {
+        if (string[i]!='}') {
+            return false;
+        }
+    }
+    return true;
+}
+
 
 let symbolicSub = function(unparsedCode, parsedForTable, localParams, substring) {
     for (let i = 0; i < parsedForTable.length; i++) {
@@ -80,6 +91,14 @@ let substitutedFunc = function(table, unparsedCode) {
                 // splittedUnparsedCode[lineInUnparsedCode] = 'return ' + table[indexInTable][4] + ';';
                 break;
             case 'Function Declaration':
+                break;
+            case 'AssignmentExpression':
+                if (findIndex(table[indexInTable][2], args, 0) === -1) {
+                    toRemove.push(lineInUnparsedCode);
+                    newRowCounter--;
+                } else {
+                    splittedUnparsedCode[lineInUnparsedCode] = splittedUnparsedCode[lineInUnparsedCode].substring(0,splittedUnparsedCode[lineInUnparsedCode].indexOf('=')) + ' = ' + table[indexInTable][4];
+                }
                 break;
             default:
                 toRemove.push(lineInUnparsedCode);
