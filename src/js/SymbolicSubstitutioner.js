@@ -76,7 +76,8 @@ let substitutedFunc = function(table, unparsedCode) {
                 table[indexInTable].push(newRowCounter);
                 break;
             case 'ReturnStatement':
-                splittedUnparsedCode[lineInUnparsedCode] = 'return ' + table[indexInTable][4] + ';';
+                splittedUnparsedCode[lineInUnparsedCode] = splittedUnparsedCode[lineInUnparsedCode].substring(0, splittedUnparsedCode[lineInUnparsedCode].lastIndexOf('return')+7) + table[indexInTable][4] + ';';
+                // splittedUnparsedCode[lineInUnparsedCode] = 'return ' + table[indexInTable][4] + ';';
                 break;
             case 'Function Declaration':
                 break;
@@ -110,7 +111,7 @@ let replaceBetweenParenthesises = function(original, replacement) {
     let startToOpen = original.substring(0, indexOfOpen+1);
     let closeToEnd = original.substring(indexOfClose);
     return startToOpen + replacement + closeToEnd;
-}
+};
 
 let findIndex = function(val, array, col) {
     for (let i=0; i<array.length; i++) {
@@ -171,7 +172,8 @@ let replaceOtherValues = function(string, localParams, isName) {
             if (string.length===1) {
                 res = res.replace(localParams[i][0], localParams[i][1]);
             } else {
-                res = res.replace(' ' + localParams[i][0] + ' ', ' (' + localParams[i][1] + ') ');
+                // res = res.replace(' ' + localParams[i][0] + ' ', ' (' + localParams[i][1] + ') ');
+                res = res.replace(' ' + localParams[i][0] + ' ', ' ' + localParams[i][1] + ' ');
             }
         }
     }

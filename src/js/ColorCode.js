@@ -35,15 +35,29 @@ let printColor = function(mapRowToFunction, convertedString) {
         node.removeChild(node.firstChild);
     }
     let convertedStringSplitted = convertedString.split('\n');
+    let str = '';
     for (let i=0; i<convertedStringSplitted.length; i++) {
-        let element = document.createElement('label');
-        element.innerHTML = convertedStringSplitted[i]+'<br />';
         let indexInMap = isInArray(mapRowToFunction, i+1);
         if(indexInMap>-1) {
-            element.style.color=mapRowToFunction[indexInMap][1];
+            str += '<span style="color: ' + mapRowToFunction[indexInMap][1] +'; display:inline-block;">';
         }
-        document.getElementById('results').appendChild(element);
+        str += convertedStringSplitted[i];
+        if(indexInMap>-1) {
+            str += '</span>';
+        }
+        str+= '<br>';
+        // let element = document.createElement('label');
+        // element.innerHTML = convertedStringSplitted[i]+'<br />';
+        // let indexInMap = isInArray(mapRowToFunction, i+1);
+        // if(indexInMap>-1) {
+        //     element.style.color=mapRowToFunction[indexInMap][1];
+        // }
+        // document.getElementById('results').appendChild(element);
     }
+    let element = document.createElement('pre');
+    element.setAttribute('contenteditable', 'true');
+    element.innerHTML = str;
+    document.getElementById('results').appendChild(element);
 }
 
 let isInArray = function(arr, rowNum) {
