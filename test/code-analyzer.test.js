@@ -58,7 +58,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('while(a > b){}');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'WhileStatement', ' ', 'a > b', ' '];
+        let expected = [ 1, 'WhileStatement', ' ', ' a > b ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -67,7 +67,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('while(a > b) a=5;');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'WhileStatement', ' ', 'a > b', ' '];
+        let expected = [ 1, 'WhileStatement', ' ', ' a > b ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -76,7 +76,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('while(a > b){}');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'WhileStatement', ' ', 'a > b', ' '];
+        let expected = [ 1, 'WhileStatement', ' ', ' a > b ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -85,7 +85,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('while(a > b){a=a+1;}');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'WhileStatement', ' ', 'a > b', ' '];
+        let expected = [ 1, 'WhileStatement', ' ', ' a > b ', ' ' ] ;
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -94,7 +94,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('a = b + c;');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'AssignmentExpression', 'a', ' ', 'b + c'];
+        let expected = [ 1, 'AssignmentExpression', 'a', ' ', ' b + c ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -103,7 +103,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('if(a + b > c){}');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'IfStatement', ' ', 'a + b > c', ' '];
+        let expected = [ 1, 'IfStatement', ' ', '  a + b  > c ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -112,7 +112,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('let a = 5 + b;');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'VariableDeclaration', 'a', ' ', '5 + b'];
+        let expected = [ 1, 'VariableDeclaration', 'a', ' ', ' 5 + b ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -166,7 +166,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('a = -(x+5);');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'AssignmentExpression', 'a', ' ', '-(x + 5)'];
+        let expected = [ 1, 'AssignmentExpression', 'a', ' ', '-( x + 5 )' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -229,7 +229,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('function f(){ return a+1;}');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [2, 'ReturnStatement', ' ', ' ', 'a + 1'];
+        let expected = [ 2, 'ReturnStatement', ' ', ' ', ' a + 1 ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[2], expected);
     });
@@ -248,7 +248,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('if(a>0){}');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'IfStatement', ' ', 'a > 0', ' '];
+        let expected = [ 1, 'IfStatement', ' ', ' a > 0 ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -257,7 +257,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('if(a>0){a=a+1;}');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'IfStatement', ' ', 'a > 0', ' '];
+        let expected = [ 1, 'IfStatement', ' ', ' a > 0 ', ' ' ] ;
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -266,7 +266,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('if(a>0)a=a+1;');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [1, 'IfStatement', ' ', 'a > 0', ' '];
+        let expected = [ 1, 'IfStatement', ' ', ' a > 0 ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -275,7 +275,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('if(a>2)a=a+1; else if(a==1) a=0;');
         convertParsedCodeToLocal(parsedCode);
-        let expected = [3, 'Else IfStatement', ' ', 'a == 1', ' '];
+        let expected = [ 3, 'Else IfStatement', ' ', ' a == 1 ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[3], expected);
     });
@@ -293,7 +293,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('while(a>b && a>0){}');
         parseCodeForTable(parsedCode);
-        let expected = [1, 'WhileStatement', ' ', 'a > b && a > 0', ' '];
+        let expected = [ 1, 'WhileStatement', ' ', '  a > b  &&  a > 0  ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -302,7 +302,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('for(i=0; i<5; i=i+1){}');
         parseCodeForTable(parsedCode);
-        let expected = [1, 'ForStatement', ' ', 'i = 0; i < 5; i = i + 1', ' '];
+        let expected = [ 1, 'ForStatement', ' ', ' i = 0 ;  i < 5 ;  i =  i + 1  ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -311,7 +311,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('for(var i=j+1; i<5; i=i+1){a=8;}');
         parseCodeForTable(parsedCode);
-        let expected = [1, 'ForStatement', ' ', 'i = j + 1; i < 5; i = i + 1', ' '];
+        let expected = [ 1, 'ForStatement',  ' ', 'i =  j + 1 ;  i < 5 ;  i =  i + 1  ', ' ' ] ;
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -320,7 +320,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('for(var i=0; i<5; i=i+1){}');
         parseCodeForTable(parsedCode);
-        let expected = [1, 'ForStatement', ' ', 'i = 0; i < 5; i = i + 1', ' '];
+        let expected = [ 1, 'ForStatement', ' ', 'i = 0;  i < 5 ;  i =  i + 1  ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
@@ -329,7 +329,7 @@ describe('The table information creator', () => {
         clearTable();
         let parsedCode = parseCode('for(var i=j; i<5; i=i+1){}');
         parseCodeForTable(parsedCode);
-        let expected = [1, 'ForStatement', ' ', 'i = j; i < 5; i = i + 1', ' '];
+        let expected = [ 1, 'ForStatement', ' ', 'i = j;  i < 5 ;  i =  i + 1  ', ' ' ];
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
