@@ -13,17 +13,12 @@ let startSymbolicSub = function(unparsedCode, parsedForTable) {
     let tmp=unparsedCode.split('\n');
     let toRemove=[];
     let goodCode='';
-    let lastValidLine = 0;
     for(let i=0; i<tmp.length; i++) {
-        // tmp[i] = tmp[i].trim();
         if (checkIfOnlyClosingCurlyBrackets(tmp[i].trim()) && i<tmp.length-1) {
             toRemove.push(i);
-            // tmp[lastValidLine] = tmp[lastValidLine] + '}';
             tmp[i+1] = tmp[i].trim() + tmp[i+1];
-        } else if (tmp[i].trim().length === 0) {
-            toRemove.push(i);
         } else {
-            lastValidLine=i;
+            continue;
         }
     }
     for(let i=0; i<toRemove.length; i++) {
@@ -32,7 +27,7 @@ let startSymbolicSub = function(unparsedCode, parsedForTable) {
     for(let i=0; i<tmp.length; i++) {
         goodCode += tmp[i]+'\n';
     }
-    symbolicSub(goodCode, parsedForTable, localParams, goodCode);
+    symbolicSub(goodCode, parsedForTable, localParams);
     tableAfterSub = parsedForTable;
     return substitutedFunc(parsedForTable, goodCode);
 };
@@ -47,7 +42,7 @@ let checkIfOnlyClosingCurlyBrackets = function(string) {
 }
 
 
-let symbolicSub = function(unparsedCode, parsedForTable, localParams, substring) {
+let symbolicSub = function(unparsedCode, parsedForTable, localParams) {
     for (let i = 0; i < parsedForTable.length; i++) {
         if (parsedForTable[i][1] === 'Variable Declaration') { //function args
             args[args.length] = parsedForTable[i][2];
@@ -56,7 +51,7 @@ let symbolicSub = function(unparsedCode, parsedForTable, localParams, substring)
             localParams[localParams.length] = [parsedForTable[i][2], subVal];
         } else if (parsedForTable[i][1] === 'IfStatement' || parsedForTable[i][1] === 'Else IfStatement' || parsedForTable[i][1] === 'WhileStatement') {
             parsedForTable[i][3] = replaceOtherValues(parsedForTable[i][3], localParams);
-            i += ifBlock(parsedForTable[i], unparsedCode, JSON.parse(JSON.stringify(localParams)), parsedForTable, substring);
+            i += ifBlock(parsedForTable[i], unparsedCode, JSON.parse(JSON.stringify(localParams)), parsedForTable);
         } else if (parsedForTable[i][1] === 'AssignmentExpression') { // assignment
             parsedForTable[i][2] = replaceOtherValues(parsedForTable[i][2], localParams, true);
             parsedForTable[i][4] = replaceOtherValues(parsedForTable[i][4], localParams, false);
@@ -88,7 +83,6 @@ let substitutedFunc = function(table, unparsedCode) {
                 break;
             case 'ReturnStatement':
                 splittedUnparsedCode[lineInUnparsedCode] = splittedUnparsedCode[lineInUnparsedCode].substring(0, splittedUnparsedCode[lineInUnparsedCode].lastIndexOf('return')+7) + table[indexInTable][4] + ';';
-                // splittedUnparsedCode[lineInUnparsedCode] = 'return ' + table[indexInTable][4] + ';';
                 break;
             case 'Function Declaration':
                 break;
@@ -106,6 +100,10 @@ let substitutedFunc = function(table, unparsedCode) {
             }
         }
     }
+    return getAns(toRemove, splittedUnparsedCode, ans);
+};
+
+let getAns = function(toRemove, splittedUnparsedCode, ans) {
     for (let i=0; i<toRemove.length; i++) {
         splittedUnparsedCode.splice(toRemove[i]-i,1);
     }
@@ -113,7 +111,7 @@ let substitutedFunc = function(table, unparsedCode) {
         ans += splittedUnparsedCode[i]+'\n';
     }
     return ans;
-};
+}
 
 let replaceBetweenParenthesises = function(original, replacement) {
     let indexOfOpen, indexOfClose;
@@ -141,7 +139,7 @@ let findIndex = function(val, array, col) {
     return -1;
 };
 
-let ifBlock = function(ifRowInTable, unparsedCode, blockLocalParams, parsedForTable, sub) {
+let ifBlock = function(ifRowInTable, unparsedCode, blockLocalParams, parsedForTable) {
     unparsedCode = unparsedCode.replace(/^\s*[\r\n]/gm, ''); //remove empty lines
     let splitted = unparsedCode.split('\n');
     let substring = new String();
@@ -150,13 +148,6 @@ let ifBlock = function(ifRowInTable, unparsedCode, blockLocalParams, parsedForTa
     }
     let endOfIfBlockPosition = findClosingBracketMatchIndex(substring, substring.indexOf('{'));
     endOfIfBlockPosition += (unparsedCode.length-substring.length+1);
-    // let innerBlock = substring.substring(0,endOfIfBlockPosition).trim().replace(/^\s*[\r]/gm, '').split('\n');
-    // for (let i =0; i<innerBlock.length; i++){
-    //     if (innerBlock[i].trim().length<2) {
-    //         innerBlock.splice(i, 1);
-    //     }
-    // }
-    // let lineOfClosing = innerBlock.length-1 + ifRowInTable[0];
     let lineOfClosing = getLineNumberByIndex(unparsedCode, endOfIfBlockPosition);
     let innerBlockTable = getBlock(parsedForTable, ifRowInTable[0], lineOfClosing);
     symbolicSub(unparsedCode, innerBlockTable, blockLocalParams.slice(),
@@ -185,26 +176,35 @@ let getLineNumberByIndex = function(string, index) {
 };
 
 let replaceOtherValues = function(string, localParams, isName) {
+    string = string +'';
     let res=string;
     for (let i=0; i<localParams.length; i++) {
-        if ((string.length===1 && string.includes(localParams[i][0])) ||string.includes(' ' + localParams[i][0] + ' ') || string.includes(' ' + localParams[i][0] + ';')) {
-            if (string.length===1) {
-                res = res.replace(localParams[i][0], localParams[i][1]);
-            } else {
-                // res = res.replace(' ' + localParams[i][0] + ' ', ' (' + localParams[i][1] + ') ');
-                res = res.replace(' ' + localParams[i][0] + ' ', ' ' + localParams[i][1] + ' ');
-            }
+        if (shouldReplace(string, localParams, i)) {
+            res = replace(string, res, localParams, i);
         }
     }
-    try {
-        parseInt(res);
-    } catch (e) {
-        return res; ///res is not a number and can replace name in row
-    }
-    if (isName) {
+    return getFinalReplacement(res, string, isName);
+};
 
+let shouldReplace = function(string, localParams, i) {
+    return ((string.length===1 && string.includes(localParams[i][0])) ||string.includes(' ' + localParams[i][0] + ' ') || string.includes(' ' + localParams[i][0] + ';'));
+};
+
+let replace = function(string, res, localParams, i) {
+    if (string.length===1) {
+        res = res.replace(localParams[i][0], localParams[i][1]);
+    } else {
+        res = res.replace(' ' + localParams[i][0] + ' ', ' ' + localParams[i][1] + ' ');
+    }
+    return res;
+};
+
+let getFinalReplacement = function(res, string, isName) {
+    parseInt(res);
+    if (isName) {
         return string; //res is a number
-    } return res;
+    }
+    return res;
 };
 
 let updateValue = function(rowToUpdate, localParams, indexToUpdate) {
@@ -220,9 +220,8 @@ let updateValue = function(rowToUpdate, localParams, indexToUpdate) {
     }
     if (found) {
         let newValue = rowToUpdate[4].replace(rowToUpdate[indexToUpdate], currentVal);
-        try {
-            newValue = algebra.parse(newValue).toString();
-        } catch (e) { e.print();}
+        newValue = algebra.parse(newValue).toString();
+
         localParams[index][1] = ' '+newValue+' ';
         rowToUpdate[4] = ' '+newValue+' ';
     }
@@ -236,6 +235,8 @@ let substitute = function(details, localParams) {
         for (let j = 0; j < localParams.length; j++) {
             if (value.includes(localParams[j][0])) {
                 value = value.replace(localParams[j][0]+' ', localParams[j][1]);
+            } else {
+                continue;
             }
         }
     }
@@ -253,23 +254,7 @@ function findClosingBracketMatchIndex(str, pos) {
             if (--depth == 0) {
                 return i;
             }
-            break;
         }
     }
-    return -1;    // No matching closing parenthesis
 }
-
-// let substituteUnparsedCode = function(unparsedCode) {
-//     removeVarDeclarations(unparsedCode);
-//     removeAssignmentExpressions(unparsedCode);
-// }
-//
-// let removeVarDeclarations = function(unparsedCode) {
-//     return unparsedCode.replace(/^.*let .*$/mg, '');
-// };
-//
-// let removeAssignmentExpressions = function(unparsedCode) {
-//     return unparsedCode.replace(/^.* = .*$\n/mg, '');
-// };
-
 export {startSymbolicSub};

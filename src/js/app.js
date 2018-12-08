@@ -14,7 +14,15 @@ $(document).ready(function () {
         let table = parseCodeForTable(parsedCode);
         createTable(table);
         let substituted=startSymbolicSub(codeToParse, table);
-        colorCode(substituted, args, tableAfterSub);
+        let str = colorCode(substituted, args, tableAfterSub);
+        let element = document.createElement('pre');
+        element.setAttribute('contenteditable', 'true');
+        element.innerHTML = str;
+        let node = document.getElementById('results');
+        while (node.firstChild) {
+            node.removeChild(node.firstChild);
+        }
+        document.getElementById('results').appendChild(element);
     });
 });
 
