@@ -249,4 +249,29 @@ describe('The Symbolic Subtitutioner', () => {
             '\n';
         test(codeToParse, expected);
     });
+    it('substituting a local param as func of other local param correctly', () => {
+        let codeToParse = 'function f(x){\n' +
+            'let a=x;\n' +
+            'let b=a+1;\n' +
+            'x=b;\n' +
+            '}';
+        let expected = 'function f(x){\n' +
+            'x =  x+ 1 \n' +
+            '}\n' +
+            '\n';
+        test(codeToParse, expected);
+    });
+    it('substituting a local param as exact other local param correctly', () => {
+        let codeToParse = 'function f(x){\n' +
+            'let a=5;\n' +
+            'let b=a;\n' +
+            'x=b;\n' +
+            '}';
+        let expected = 'function f(x){\n' +
+            'x = 5\n' +
+            '}\n' +
+            '\n';
+        test(codeToParse, expected);
+    });
+
 });
