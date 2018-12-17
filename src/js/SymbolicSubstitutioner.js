@@ -7,7 +7,7 @@ export{tableAfterSub};
 
 // let assignmentExpressions = [];
 
-let startSymbolicSub = function(unparsedCode, parsedForTable, argsString) {
+let startSymbolicSub = function(unparsedCode, parsedForTable) {
     let localParams = [];
     args = [];
     let tmp=unparsedCode.split('\n');
@@ -21,17 +21,24 @@ let startSymbolicSub = function(unparsedCode, parsedForTable, argsString) {
             continue;
         }
     }
-    for(let i=0; i<toRemove.length; i++) {
-        tmp.splice(toRemove[i]-i,1);
-    }
+    getTmp(tmp, toRemove);
     for(let i=0; i<tmp.length; i++) {
         goodCode += tmp[i]+'\n';
     }
+    return init(goodCode, parsedForTable, localParams);
+};
+
+let init = function(goodCode, parsedForTable, localParams) {
     symbolicSub(goodCode, parsedForTable, localParams);
     tableAfterSub = parsedForTable;
     return substitutedFunc(parsedForTable, goodCode);
 };
 
+let getTmp = function (tmp, toRemove) {
+    for(let i=0; i<toRemove.length; i++) {
+        tmp.splice(toRemove[i]-i,1);
+    }
+};
 
 let checkIfOnlyClosingCurlyBrackets = function(string) {
     for (let i=0; i<string.length; i++) {
@@ -45,27 +52,50 @@ let checkIfOnlyClosingCurlyBrackets = function(string) {
 
 let symbolicSub = function(unparsedCode, parsedForTable, localParams) {
     for (let i = 0; i < parsedForTable.length; i++) {
-        if (parsedForTable[i][1] === 'Variable Declaration') { //function args
-            args[args.length] = parsedForTable[i][2];
-        } else if (parsedForTable[i][1] === 'VariableDeclaration') { //var declaration- let..
-            let subVal = substitute(parsedForTable[i], localParams);
-            localParams[localParams.length] = [parsedForTable[i][2], subVal];
-            checkIfLocalArray(parsedForTable[i], localParams); //maybe use subval
-        } else if (parsedForTable[i][1] === 'IfStatement' || parsedForTable[i][1] === 'Else IfStatement' || parsedForTable[i][1] === 'WhileStatement') {
-            parsedForTable[i][3] = replaceOtherValues(parsedForTable[i][3], localParams, false, parsedForTable[i]);
-            i += ifBlock(parsedForTable[i], unparsedCode, JSON.parse(JSON.stringify(localParams)), parsedForTable);
-        } else if (parsedForTable[i][1] === 'AssignmentExpression') { // assignment
-            parsedForTable[i][2] = replaceOtherValues(parsedForTable[i][2], localParams, true, parsedForTable[i]);
-            parsedForTable[i][4] = replaceOtherValues(parsedForTable[i][4], localParams, false, parsedForTable[i]);
-            localParams = updateValue(parsedForTable[i], localParams, 2);
-            localParams = updateValue(parsedForTable[i], localParams, 4);
+        let func = rowTypeMapper[parsedForTable[i][1]];
+        if (func != undefined) {
+            i= func.call(undefined, parsedForTable, i, localParams, unparsedCode);
         } else {
-            parsedForTable[i][3] = replaceOtherValues(parsedForTable[i][3], localParams, false, parsedForTable[i]);
-            parsedForTable[i][4] = replaceOtherValues(parsedForTable[i][4], localParams, false, parsedForTable[i]);
+            otherStatements(parsedForTable, i, localParams);
         }
     }
 
 };
+
+let varSpaceDeclaration = function(parsedForTable, i){
+    args[args.length] = parsedForTable[i][2];
+    return i;
+};
+
+let variableDeclaration = function(parsedForTable, i, localParams) {
+    let subVal = substitute(parsedForTable[i], localParams);
+    localParams[localParams.length] = [parsedForTable[i][2], subVal];
+    checkIfLocalArray(parsedForTable[i], localParams); //maybe use subval
+    return i;
+};
+
+let conditionStatement = function(parsedForTable, i, localParams, unparsedCode) {
+    parsedForTable[i][3] = replaceOtherValues(parsedForTable[i][3], localParams, false, parsedForTable[i]);
+    return i + ifBlock(parsedForTable[i], unparsedCode, JSON.parse(JSON.stringify(localParams)), parsedForTable);
+};
+
+let otherStatements = function(parsedForTable, i, localParams) {
+    parsedForTable[i][3] = replaceOtherValues(parsedForTable[i][3], localParams, false, parsedForTable[i]);
+    parsedForTable[i][4] = replaceOtherValues(parsedForTable[i][4], localParams, false, parsedForTable[i]);
+    return i;
+};
+
+let assignmentExp = function(parsedForTable, i, localParams) {
+    parsedForTable[i][2] = replaceOtherValues(parsedForTable[i][2], localParams, true, parsedForTable[i]);
+    parsedForTable[i][4] = replaceOtherValues(parsedForTable[i][4], localParams, false, parsedForTable[i]);
+    localParams = updateValue(parsedForTable[i], localParams, 2);
+    localParams = updateValue(parsedForTable[i], localParams, 4);
+    return i;
+};
+
+let rowTypeMapper = {'Variable Declaration': varSpaceDeclaration, 'VariableDeclaration':variableDeclaration, 'IfStatement': conditionStatement,
+    'Else IfStatement': conditionStatement, 'WhileStatement':conditionStatement, 'AssignmentExpression': assignmentExp};
+
 
 
 let checkIfLocalArray = function(parsedForTableRow, localParams) {
@@ -76,7 +106,7 @@ let checkIfLocalArray = function(parsedForTableRow, localParams) {
             localParams.push([parsedForTableRow[2]+'['+i+']', splitted[i]]);
         }
     }
-}
+};
 
 let substitutedFunc = function(table, unparsedCode) {
     let splittedUnparsedCode = unparsedCode.split('\n');
@@ -87,35 +117,51 @@ let substitutedFunc = function(table, unparsedCode) {
         let indexInTable = findIndex(lineInUnparsedCode+1, table, 0);
         newRowCounter++;
         if (indexInTable != -1) {
-            switch(table[indexInTable][1]) {
-            case 'IfStatement':
-            case 'WhileStatement':
-            case 'Else IfStatement':
-                splittedUnparsedCode[lineInUnparsedCode] = replaceBetweenParenthesises(splittedUnparsedCode[lineInUnparsedCode], table[indexInTable][3]);
-                table[indexInTable].push(newRowCounter);
-                break;
-            case 'ReturnStatement':
-                splittedUnparsedCode[lineInUnparsedCode] = splittedUnparsedCode[lineInUnparsedCode].substring(0, splittedUnparsedCode[lineInUnparsedCode].lastIndexOf('return')+7) + table[indexInTable][4] + ';';
-                break;
-            case 'Function Declaration':
-                break;
-            case 'AssignmentExpression':
-                if (findIndex(table[indexInTable][2], args, 0) === -1) {
-                    toRemove.push(lineInUnparsedCode);
-                    newRowCounter--;
-                } else {
-                    // splittedUnparsedCode[lineInUnparsedCode] = splittedUnparsedCode[lineInUnparsedCode].substring(0,splittedUnparsedCode[lineInUnparsedCode].indexOf('=')) + ' = ' + table[indexInTable][4];
-                    splittedUnparsedCode[lineInUnparsedCode] = table[indexInTable][2] + ' = ' + table[indexInTable][4];
-                }
-                break;
-            default:
-                toRemove.push(lineInUnparsedCode);
-                newRowCounter--;
+            let func = subMapper[table[indexInTable][1]];
+            if(func!= undefined) {
+                newRowCounter = func.call(undefined, splittedUnparsedCode, lineInUnparsedCode, table, indexInTable, newRowCounter, toRemove);
+            } else {
+                newRowCounter=subDefault(table, toRemove, lineInUnparsedCode, newRowCounter, indexInTable);
             }
         }
     }
     return getAns(toRemove, splittedUnparsedCode, ans);
 };
+
+let subDefault = function(table, toRemove, lineInUnparsedCode, newRowCounter, indexInTable) {
+    if(table[indexInTable][1] != 'Function Declaration') {
+        toRemove.push(lineInUnparsedCode);
+        return newRowCounter-1;
+    } else {
+        return newRowCounter;
+    }
+};
+
+let subIfWhileElse = function(splittedUnparsedCode, lineInUnparsedCode, table, indexInTable, newRowCounter) {
+    splittedUnparsedCode[lineInUnparsedCode] = replaceBetweenParenthesises(splittedUnparsedCode[lineInUnparsedCode], table[indexInTable][3]);
+    table[indexInTable].push(newRowCounter);
+    return newRowCounter;
+};
+
+let subReturn = function(splittedUnparsedCode, lineInUnparsedCode, table, indexInTable, newRowCounter){
+    splittedUnparsedCode[lineInUnparsedCode] = splittedUnparsedCode[lineInUnparsedCode].substring(0, splittedUnparsedCode[lineInUnparsedCode].lastIndexOf('return')+7) + table[indexInTable][4] + ';';
+    return newRowCounter;
+};
+
+let subAssign = function(splittedUnparsedCode, lineInUnparsedCode, table, indexInTable, newRowCounter, toRemove){
+    if (findIndex(table[indexInTable][2], args, 0) === -1) {
+        toRemove.push(lineInUnparsedCode);
+        newRowCounter--;
+    } else {
+        splittedUnparsedCode[lineInUnparsedCode] = table[indexInTable][2] + ' = ' + table[indexInTable][4];
+    }
+    return newRowCounter;
+};
+
+let subMapper = {'IfStatement':subIfWhileElse, 'WhileStatement': subIfWhileElse, 'Else IfStatement': subIfWhileElse,
+    'ReturnStatement': subReturn, 'AssignmentExpression': subAssign};
+
+
 
 let getAns = function(toRemove, splittedUnparsedCode, ans) {
     for (let i=0; i<toRemove.length; i++) {
@@ -125,7 +171,7 @@ let getAns = function(toRemove, splittedUnparsedCode, ans) {
         ans += splittedUnparsedCode[i]+'\n';
     }
     return ans;
-}
+};
 
 let replaceBetweenParenthesises = function(original, replacement) {
     let indexOfOpen, indexOfClose;
@@ -201,9 +247,17 @@ let replaceOtherValues = function(string, localParams, isName, row) {
 };
 
 let shouldReplace = function(string, localParams, i) {
-    return ((string.length===1 && string.includes(localParams[i][0])) ||string.includes(' ' + localParams[i][0] + ' ')
-        || string.includes(' ' + localParams[i][0] + ';') || string.includes(localParams[i][0]+'[') || isArg(string)
+    return (cond1(string, localParams, i) || cond2(string, localParams, i) || string.includes(localParams[i][0]+'[') || isArg(string)
     || string === localParams[i][0]);
+};
+
+let cond1 = function(string, localParams, i) {
+    return (string.length===1 && string.includes(localParams[i][0]));
+};
+
+let cond2 = function(string, localParams, i) {
+    return (string.includes(' ' + localParams[i][0] + ' ')
+        || string.includes(' ' + localParams[i][0] + ';'));
 };
 
 let isArg = function(string) {
@@ -213,7 +267,7 @@ let isArg = function(string) {
         }
     }
     return false;
-}
+};
 
 let replace = function(string, res, localParams, i, row) {
 
@@ -238,7 +292,7 @@ let replaceArrExp = function(string, localParams, i, row) {
         res = string.substring(0, string.indexOf('[')) + string.substring(string.indexOf('[')).replace(localParams[i][0], localParams[i][1]);
     }
     return res;
-}
+};
 
 let updateArrValLocalParams = function(string, localParams, i, row) {
     for(let i=0; i<localParams.length; i++) {
@@ -249,7 +303,7 @@ let updateArrValLocalParams = function(string, localParams, i, row) {
             localParams[i][1]=row[4];
         }
     }
-}
+};
 
 let getFinalReplacement = function(res, string, isName) {
     parseInt(res);
@@ -281,46 +335,39 @@ let updateValue = function(rowToUpdate, localParams, indexToUpdate) {
     }
     if (found) {
         let newValue = rowToUpdate[4].replace(rowToUpdate[indexToUpdate], currentVal);
-        // try {
-        //     newValue = algebra.parse(newValue).toString();
-        // } catch(e) {
-        //     newValue = getArrValue(newValue, localParams);
-        // }
-
         localParams[index][1] = ' '+newValue+' ';
         rowToUpdate[4] = ' '+newValue+' ';
     }
     return localParams;
 };
 
-let getArrValue = function(value, localParams) {
-    for (let i=0; i<localParams.length; i++) {
-        if(localParams[i][0]===value) {
-            return localParams[i][1];
-        }
-    }
-    return -1;
-}
+// let getArrValue = function(value, localParams) {
+//     for (let i=0; i<localParams.length; i++) {
+//     if(localParams[i][0]===value) {
+//         return localParams[i][1];
+//     }
+// }
+// return -1;
+// };
 
 let substitute = function(details, localParams) {
     let value = details[4];
-    if ((typeof value) === 'string')
-    {
-        for (let j = 0; j < localParams.length; j++) {
-            if (value.includes(localParams[j][0])) {
-                if(value===localParams[j][0]) {
-                    value=localParams[j][1];
-                } else {
-                    value = value.replace(localParams[j][0]+' ', localParams[j][1]);
-                    value = value.replace(localParams[j][0]+']', localParams[j][1]+']');
-                    value = value.replace('['+localParams[j][0], '['+localParams[j][1]);
-                    value = value.replace(','+localParams[j][0]+',', ','+localParams[j][1]+',');
-                }
+
+    for (let j = 0; j < localParams.length; j++) {
+        if (value.includes(localParams[j][0])) {
+            if(value===localParams[j][0]) {
+                value=localParams[j][1];
             } else {
-                continue;
+                value = value.replace(localParams[j][0]+' ', localParams[j][1]);
+                value = value.replace(localParams[j][0]+']', localParams[j][1]+']');
+                value = value.replace('['+localParams[j][0], '['+localParams[j][1]);
+                value = value.replace(','+localParams[j][0]+',', ','+localParams[j][1]+',');
             }
+        } else {
+            continue;
         }
     }
+
     return value;
 };
 

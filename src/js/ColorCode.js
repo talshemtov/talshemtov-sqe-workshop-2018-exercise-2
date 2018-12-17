@@ -10,8 +10,7 @@ let colorCode = function (codeToColor, argsString, table) {
     let assignmentString = getAssignmentString(argNames, splittedArgs);
     for(let i=0; i<table.length; i++) {
         if(table[i][1]==='IfStatement' || table[i][1]==='Else IfStatement') {
-            let condition = table[i][3];
-            let strToEval = assignmentString+ ' ' + condition + ';';
+            let strToEval = assignmentString+ ' ' + table[i][3] + ';';
             if(eval(strToEval)) {
                 mapRowToColor.push([table[i][5],'green']);
             } else {
@@ -34,11 +33,11 @@ let checkIfShouldChangeAssignmentString = function(splittedArgs, tableRow, argNa
         }
         return getAssignmentString(argNames, splittedArgs);
     }
-}
+};
 
 let replaceValue = function(tableRow, splittedArgs, i, assignmentString, argNames) {
     if(tableRow[2].includes('[')) {
-        let index = tableRow[2].substring(tableRow[2].indexOf('[')+1, tableRow[2].indexOf(']'));
+        // let index = tableRow[2].substring(tableRow[2].indexOf('[')+1, tableRow[2].indexOf(']'));
         let current = splittedArgs[i];
         let newValInIndex = eval(assignmentString + tableRow[4]);
         splittedArgs[i] = '['+eval('let '+argNames[i]+' ='+current + ';'+tableRow[2] + '=' + newValInIndex + ';' + argNames[i]).toString() + ']';
@@ -46,7 +45,7 @@ let replaceValue = function(tableRow, splittedArgs, i, assignmentString, argName
     } else {
         splittedArgs[i] = eval(assignmentString + tableRow[4]);
     }
-}
+};
 
 let getSplittedArgs = function(argsString) {
     let final = [];
@@ -58,14 +57,14 @@ let getSplittedArgs = function(argsString) {
             }
             final.push(argsString.substring(char, char+lastIndex));
             char+=argsString.substring(char, argsString.substring(char).indexOf(',')).length;
-        } else if (argsString[char]==='[') {
+        } else {
             let arr = argsString.substring(char, argsString.substring(char).indexOf(']'));
             char+=arr.length;
             final.push(arr+']');
         }
     }
     return final;
-}
+};
 
 let getAssignmentString  = function(argNames, splittedArgs) {
     let assignmentString = '';
