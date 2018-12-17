@@ -333,6 +333,14 @@ describe('The table information creator', () => {
         let actual = parsedForTable;
         assert.deepEqual(actual[1], expected);
     });
+    it('Can identify if with boolean', () => {
+        clearTable();
+        let parsedCode = parseCode('if(true){}');
+        parseCodeForTable(parsedCode);
+        let expected = [ 1, 'IfStatement', ' ', true, ' ' ];
+        let actual = parsedForTable;
+        assert.deepEqual(actual[1], expected);
+    });
 });
 
 
