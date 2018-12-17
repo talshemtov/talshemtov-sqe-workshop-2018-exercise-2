@@ -58,7 +58,7 @@ let getSplittedArgs = function(argsString) {
             final.push(argsString.substring(char, char+lastIndex));
             char+=argsString.substring(char, argsString.substring(char).indexOf(',')).length;
         } else {
-            let arr = argsString.substring(char, argsString.substring(char).indexOf(']')+1);
+            let arr = argsString.substring(char, char+argsString.substring(char).indexOf(']')+1);
             char+=arr.length;
             final.push(arr);
         }
