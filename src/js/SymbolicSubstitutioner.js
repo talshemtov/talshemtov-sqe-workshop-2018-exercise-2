@@ -2,12 +2,14 @@ import * as algebra from 'algebra.js';
 
 let args = [];
 let tableAfterSub;
+let argValues = [];
 
 export{tableAfterSub};
 
 // let assignmentExpressions = [];
 
-let startSymbolicSub = function(unparsedCode, parsedForTable) {
+let startSymbolicSub = function(unparsedCode, parsedForTable, argString) {
+    argValues = getSplittedArgs(argString);
     let localParams = [];
     args = [];
     let tmp=unparsedCode.split('\n');
@@ -17,15 +19,32 @@ let startSymbolicSub = function(unparsedCode, parsedForTable) {
         if (checkIfOnlyClosingCurlyBrackets(tmp[i].trim()) && i<tmp.length-1) {
             toRemove.push(i);
             tmp[i+1] = tmp[i].trim() + tmp[i+1];
-        } else {
-            continue;
-        }
+        } else {continue;}
     }
     getTmp(tmp, toRemove);
     for(let i=0; i<tmp.length; i++) {
         goodCode += tmp[i]+'\n';
     }
     return init(goodCode, parsedForTable, localParams);
+};
+
+let getSplittedArgs = function(argsString) {
+    let final = [];
+    for(let char=0; char<argsString.length; char++) {
+        if (argsString[char]!=',' && argsString[char]!='[') {
+            let lastIndex = argsString.substring(char).indexOf(',');
+            if (lastIndex===-1) {
+                lastIndex = argsString.substring(char).lastIndexOf('');
+            }
+            final.push(argsString.substring(char, char+lastIndex));
+            char+=argsString.substring(char, argsString.substring(char).indexOf(',')).length;
+        } else {
+            let arr = argsString.substring(char, argsString.substring(char).indexOf(']')+1);
+            char+=arr.length;
+            final.push(arr);
+        }
+    }
+    return final;
 };
 
 let init = function(goodCode, parsedForTable, localParams) {
@@ -286,15 +305,32 @@ let replace = function(string, res, localParams, i, row) {
 };
 
 let replaceArrExp = function(string, localParams, i, row) {
-    updateArrValLocalParams(string, localParams, i, row);
-    let res = string.substring(0, string.indexOf('[')).replace(localParams[i][0], localParams[i][1]) + string.substring(string.indexOf('['));
-    if (isArg(string.substring(0, string.indexOf('[')))) {
-        res = string.substring(0, string.indexOf('[')) + string.substring(string.indexOf('[')).replace(localParams[i][0], localParams[i][1]);
+    let tmp = checkIfMemberInBracketIsArg(string);
+    if(string!= tmp) {
+        return tmp;
+    } else {
+        try {
+            updateArrValLocalParams(string, localParams, i, row);
+        } catch(e){}
+        let res = string.substring(0, string.indexOf('[')).replace(localParams[i][0], localParams[i][1]) + string.substring(string.indexOf('['));
+        if (isArg(string.substring(0, string.indexOf('[')))) {
+            res = string.substring(0, string.indexOf('[')) + string.substring(string.indexOf('[')).replace(localParams[i][0], localParams[i][1]);
+        }
+        return res;
     }
-    return res;
 };
 
-let updateArrValLocalParams = function(string, localParams, i, row) {
+let checkIfMemberInBracketIsArg = function(res) {
+    let inBrackets = res.substring(res.indexOf('[')+1, res.indexOf(']'));
+    for(let i=0; i<args.length; i++) {
+        if(args[i]===inBrackets) {
+            res = res.substring(0, res.indexOf('[')) + '[' + argValues[i] + res.substring(res.indexOf(']'));
+        }
+    }
+    return res;
+}
+
+let     updateArrValLocalParams = function(string, localParams, i, row) {
     for(let i=0; i<localParams.length; i++) {
         if(localParams[i][0]===string.substring(0, string.indexOf('['))) {
             localParams[i][1]='['+eval('let '+string.substring(0, string.indexOf('['))+' ='+localParams[i][1] + ';'+string + '=' + row[4] + ';' +
