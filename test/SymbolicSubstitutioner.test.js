@@ -6,12 +6,12 @@ import {
 import {startSymbolicSub} from '../src/js/SymbolicSubstitutioner';
 import assert from 'assert';
 
-let test = function(codeToParse, expected){
+let test = function(codeToParse, expected, argString){
     clearTable();
     let parsedCode = parseCode(codeToParse);
     convertParsedCodeToLocal(parsedCode);
     let table = parsedForTable;
-    let substituted=startSymbolicSub(codeToParse, table);
+    let substituted=startSymbolicSub(codeToParse, table, argString);
     let actual = substituted;
     return assert.equal(actual, expected);
 };
@@ -23,7 +23,7 @@ describe('The Symbolic Subtitutioner', () => {
             'return x;\n' +
             '}';
         let expected = 'function foo(x) {\nreturn x;\n}\n\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1');
     });
 
     it('substituting a if else function correctly', () => {
@@ -42,7 +42,7 @@ describe('The Symbolic Subtitutioner', () => {
             'return 0;\n' +
             '}}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1');
     });
 
     it('substituting a if else if else function correctly', () => {
@@ -65,7 +65,7 @@ describe('The Symbolic Subtitutioner', () => {
             'return 5;\n' +
             '}}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1');
     });
 
     it('substituting a while function correctly', () => {
@@ -81,7 +81,7 @@ describe('The Symbolic Subtitutioner', () => {
             'x =   x + 1  \n' +
             '}}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1');
     });
 
     it('substituting a while function with empty line correctly', () => {
@@ -97,7 +97,7 @@ describe('The Symbolic Subtitutioner', () => {
             'x =   x + 1  \n' +
             '}}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1');
     });
     it('substituting a while function with empty line correctly', () => {
         let codeToParse = 'function foo(x, y, z){\n' +
@@ -130,7 +130,7 @@ describe('The Symbolic Subtitutioner', () => {
             '                    return    x + y  + z  +    0 + z  + 5   ;\n' +
             '}            }\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1,2,3');
     });
 
     it('substituting a return function with no local args correctly', () => {
@@ -141,7 +141,7 @@ describe('The Symbolic Subtitutioner', () => {
             'return x;\n' +
             '}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1');
     });
 
     it('substituting a return function with 1 local args correctly', () => {
@@ -153,7 +153,7 @@ describe('The Symbolic Subtitutioner', () => {
             'return x;\n' +
             '}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1');
     });
     it('substituting a assignment expression with arg correctly', () => {
         let codeToParse = 'function foo(x, y, z){\n' +
@@ -165,7 +165,7 @@ describe('The Symbolic Subtitutioner', () => {
             '    return y;\n' +
             '}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1,2,3');
     });
     it('substituting a array expressions correctly', () => {
         let codeToParse = 'function insertionSort (items) {\n' +
@@ -188,7 +188,7 @@ describe('The Symbolic Subtitutioner', () => {
             '}}  return items;\n' +
             '}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '[1,2]');
     });
     it('substituting a local array correctly', () => {
         let codeToParse = 'function f() {\n' +
@@ -202,7 +202,7 @@ describe('The Symbolic Subtitutioner', () => {
             'return 1;\n' +
             '}}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '');
     });
     it('substituting a local array with identifier element correctly', () => {
         let codeToParse = 'function f() {\n' +
@@ -217,7 +217,7 @@ describe('The Symbolic Subtitutioner', () => {
             'return 1;\n' +
             '}}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '');
     });
     it('substituting a local array with expression element correctly', () => {
         let codeToParse = 'function f() {\n' +
@@ -232,7 +232,7 @@ describe('The Symbolic Subtitutioner', () => {
             'return 1;\n' +
             '}}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '');
     });
     it('substituting a local array element correctly', () => {
         let codeToParse = 'function foo() {\n' +
@@ -247,7 +247,7 @@ describe('The Symbolic Subtitutioner', () => {
             'return 1;\n' +
             '} }\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '');
     });
     it('substituting a local param as func of other local param correctly', () => {
         let codeToParse = 'function f(x){\n' +
@@ -259,7 +259,7 @@ describe('The Symbolic Subtitutioner', () => {
             'x =  x+ 1 \n' +
             '}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1');
     });
     it('substituting a local param as exact other local param correctly', () => {
         let codeToParse = 'function f(x){\n' +
@@ -271,7 +271,23 @@ describe('The Symbolic Subtitutioner', () => {
             'x = 5\n' +
             '}\n' +
             '\n';
-        test(codeToParse, expected);
+        test(codeToParse, expected, '1');
+    });
+    it('substituting a arg value in member expression', () => {
+        let codeToParse = 'function f(x){\n' +
+            'let a= [1,2,3];\n' +
+            'x=a[x];\n' +
+            'if (x===1){\n' +
+            'return x;\n' +
+            '}\n' +
+            '}';
+        let expected = 'function f(x){\n' +
+            'x =  2 \n' +
+            'if ( x === 1 ){\n' +
+            'return x;\n' +
+            '}}\n' +
+            '\n';
+        test(codeToParse, expected, '1');
     });
 
 });

@@ -10,7 +10,7 @@ let test = function(codeToParse, argsString, expected) {
     let parsedCode = parseCode(codeToParse);
     convertParsedCodeToLocal(parsedCode);
     let table = parsedForTable;
-    let substituted=startSymbolicSub(codeToParse, table);
+    let substituted=startSymbolicSub(codeToParse, table, argsString);
     colorCode(substituted, argsString, table);
     let actual = innerHTML;
     return assert.equal(actual, expected);
