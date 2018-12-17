@@ -59,7 +59,7 @@ function varDeclaration(parsedCode) {
         let val = ' ';
         if(parsedCode.declarations[i].init != null) {
             if(parsedCode.declarations[i].init.type === 'Literal') {
-                val = parsedCode.declarations[i].init.value;
+                val = parsedCode.declarations[i].init.raw;
             } else if (parsedCode.declarations[i].init.type === 'Identifier') {
                 val = parsedCode.declarations[i].init.name;
             }
@@ -75,7 +75,7 @@ function varDeclaration(parsedCode) {
 let expressionStatement = function expressionStatement(parsedCode) {
     if(parsedCode.expression.right.type === 'Literal') {
         let val = mapper[parsedCode.expression.left.type].call(undefined, parsedCode.expression.left);
-        parsedForTable[parsedForTable.length] = [line, parsedCode.expression.type, val, ' ',  parsedCode.expression.right.value];
+        parsedForTable[parsedForTable.length] = [line, parsedCode.expression.type, val, ' ',  parsedCode.expression.right.raw];
     }
     else  {
         let left = mapper[parsedCode.expression.left.type].call(undefined, parsedCode.expression.left);
@@ -83,6 +83,20 @@ let expressionStatement = function expressionStatement(parsedCode) {
         parsedForTable[parsedForTable.length] = [line, parsedCode.expression.type, left, ' ',  val];
     }
     line++;
+};
+
+let arrayExpression = function arrayExpression(parsedCode) {
+    let exp = '[';
+    for (let i=0; i<parsedCode.elements.length; i++) {
+        if (parsedCode.elements[i].type === 'Literal') {
+            exp += parsedCode.elements[i].raw + ',';
+        } else if (parsedCode.elements[i].type === 'Identifier') {
+            exp += parsedCode.elements[i].name + ',';
+        } else {
+            exp += mapper[parsedCode.elements[i].type].call(undefined, parsedCode.elements[i])+',';
+        }
+    }
+    return exp.substring(0, exp.length-1) + ']';
 };
 
 let binaryExpression = function binaryExpression(parsedCode){
@@ -98,7 +112,7 @@ let left = function left(parsedCode) {
     if (parsedCode.left.type === 'Identifier') {
         exp = parsedCode.left.name;
     } else if ( parsedCode.left.type === 'Literal') {
-        exp += parsedCode.left.value;
+        exp += parsedCode.left.raw;
     } else {
         exp += mapper[parsedCode.left.type].call(undefined, parsedCode.left);
     }
@@ -110,7 +124,7 @@ let right = function right(parsedCode) {
     if (parsedCode.right.type === 'Identifier') {
         exp += parsedCode.right.name;
     } else if ( parsedCode.right.type === 'Literal') {
-        exp += parsedCode.right.value;
+        exp += parsedCode.right.raw;
     }
     else {
         exp += mapper[parsedCode.right.type].call(undefined, parsedCode.right);
@@ -123,7 +137,7 @@ let memberExpression = function memberExpression(parsedCode) {
     if (parsedCode.property.type === 'Identifier') {
         exp += parsedCode.property.name;
     } else if (parsedCode.property.type === 'Literal') {
-        exp += parsedCode.property.value;
+        exp += parsedCode.property.raw;
     } else {
         exp += mapper[parsedCode.property.type].call(undefined, parsedCode.property);
     }
@@ -133,7 +147,8 @@ let memberExpression = function memberExpression(parsedCode) {
 let whileAndIfStatement = function whileAndIfStatement(parsedCode) {
     let test;
     // if(parsedCode.test.type === 'BinaryExpression' || 'LogicalExpression') {
-    test = binaryExpression(parsedCode.test);
+    test = mapper[parsedCode.test.type].call(undefined, parsedCode.test);
+    // test = binaryExpression(parsedCode.test);
 
     let type = parsedCode.type;
     if (isElse) {
@@ -175,7 +190,7 @@ let returnStatement = function returnStatement(parsedCode) {
     if (parsedCode.argument.type === 'Identifier') {
         val = parsedCode.argument.name;
     } else if (parsedCode.argument.type === 'Literal') {
-        val = parsedCode.argument.value;
+        val = parsedCode.argument.raw;
     } else  {
         val = mapper[parsedCode.argument.type].call(undefined, parsedCode.argument);
     }
@@ -186,7 +201,7 @@ let returnStatement = function returnStatement(parsedCode) {
 let unaryExpression = function unaryExpression(parsedCode) {
     let val = parsedCode.operator;
     if (parsedCode.argument.type === 'Literal') {
-        val += parsedCode.argument.value;
+        val += parsedCode.argument.raw;
     } else if ( parsedCode.argument.type === 'Identifier') {
         val += parsedCode.argument.name;
     } else {
@@ -204,7 +219,7 @@ let initFor = function initFor(init) {
     if(init.type === 'VariableDeclaration') {
         val = init.declarations[0].id.name + ' =';
         if(init.declarations[0].init.type === 'Literal') {
-            val += ' ' + init.declarations[0].init.value;
+            val += ' ' + init.declarations[0].init.raw;
         } else if (init.declarations[0].init.type === 'Identifier') {
             val += ' ' +  init.declarations[0].init.name;
         }
@@ -228,13 +243,18 @@ let forStatement = function forStatement(parsedCode) {
     }
 };
 
+// let logicalExpression = function(parsedCode) {
+//
+// }
 
 let mapper = {'BinaryExpression': binaryExpression,'UnaryExpression': unaryExpression, 'MemberExpression': memberExpression,
     'ExpressionStatement': expressionStatement, 'WhileStatement': whileAndIfStatement, 'IfStatement': whileAndIfStatement,
     'ReturnStatement': returnStatement, 'VariableDeclaration': varDeclaration, 'Identifier': identifier, 'BlockStatement': blockStatement,
-    'ForStatement': forStatement};
+    'ForStatement': forStatement, 'ArrayExpression': arrayExpression, 'FunctionDeclaration': funcDeclaration,
+    'LogicalExpression': binaryExpression};
 
 let whileIfMapper = {'WhileStatement': whileStatement, 'IfStatement': ifStatement};
+
 
 export {convertParsedCodeToLocal};
 export {parseCodeForTable};

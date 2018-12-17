@@ -13,7 +13,7 @@ $(document).ready(function () {
         let parsedCode = parseCode(codeToParse);
         let table = parseCodeForTable(parsedCode);
         createTable(table);
-        let substituted=startSymbolicSub(codeToParse, table);
+        let substituted=startSymbolicSub(codeToParse, table, args);
         let str = colorCode(substituted, args, tableAfterSub);
         let element = document.createElement('pre');
         element.setAttribute('contenteditable', 'true');

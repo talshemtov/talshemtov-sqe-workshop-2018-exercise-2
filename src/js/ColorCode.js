@@ -4,11 +4,10 @@ let clearInnerHTML = function() {
 };
 
 let colorCode = function (codeToColor, argsString, table) {
-    let splittedArgs = argsString.split(',');
+    let splittedArgs = getSplittedArgs(argsString);
     let argNames = getArgNames(table, splittedArgs.length);
     let mapRowToColor=[];
     let assignmentString = getAssignmentString(argNames, splittedArgs);
-
     for(let i=0; i<table.length; i++) {
         if(table[i][1]==='IfStatement' || table[i][1]==='Else IfStatement') {
             let condition = table[i][3];
@@ -18,10 +17,55 @@ let colorCode = function (codeToColor, argsString, table) {
             } else {
                 mapRowToColor.push([table[i][5],'red']);
             }
+        } else {
+            checkIfShouldChangeAssignmentString(splittedArgs, table[i], argNames, assignmentString);
+            assignmentString = getAssignmentString(argNames, splittedArgs);
         }
     }
     return printColor(mapRowToColor, codeToColor);
 };
+
+let checkIfShouldChangeAssignmentString = function(splittedArgs, tableRow, argNames, assignmentString) {
+    if(tableRow[1] ==='AssignmentExpression') {
+        for (let i=0; i<argNames.length; i++) {
+            if(tableRow[2].includes(argNames[i])) {
+                replaceValue(tableRow, splittedArgs, i, assignmentString, argNames);
+            }
+        }
+        return getAssignmentString(argNames, splittedArgs);
+    }
+}
+
+let replaceValue = function(tableRow, splittedArgs, i, assignmentString, argNames) {
+    if(tableRow[2].includes('[')) {
+        let index = tableRow[2].substring(tableRow[2].indexOf('[')+1, tableRow[2].indexOf(']'));
+        let current = splittedArgs[i];
+        let newValInIndex = eval(assignmentString + tableRow[4]);
+        splittedArgs[i] = '['+eval('let '+argNames[i]+' ='+current + ';'+tableRow[2] + '=' + newValInIndex + ';' + argNames[i]).toString() + ']';
+        return splittedArgs;
+    } else {
+        splittedArgs[i] = eval(assignmentString + tableRow[4]);
+    }
+}
+
+let getSplittedArgs = function(argsString) {
+    let final = [];
+    for(let char=0; char<argsString.length; char++) {
+        if (argsString[char]!=',' && argsString[char]!='[') {
+            let lastIndex = argsString.substring(char).indexOf(',');
+            if (lastIndex===-1) {
+                lastIndex = argsString.substring(char).lastIndexOf('');
+            }
+            final.push(argsString.substring(char, char+lastIndex));
+            char+=argsString.substring(char, argsString.substring(char).indexOf(',')).length;
+        } else if (argsString[char]==='[') {
+            let arr = argsString.substring(char, argsString.substring(char).indexOf(']'));
+            char+=arr.length;
+            final.push(arr+']');
+        }
+    }
+    return final;
+}
 
 let getAssignmentString  = function(argNames, splittedArgs) {
     let assignmentString = '';
