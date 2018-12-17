@@ -37,10 +37,10 @@ let getSplittedArgs = function(argsString) {
                 lastIndex = argsString.substring(char).lastIndexOf('');
             }
             final.push(argsString.substring(char, char+lastIndex));
-            char+=argsString.substring(char, argsString.substring(char).indexOf(',')).length;
+            char=char+argsString.substring(char, char+lastIndex).length;
         } else {
             let arr = argsString.substring(char, char+argsString.substring(char).indexOf(']')+1);
-            char+=arr.length;
+            char=char+arr.length;
             final.push(arr);
         }
     }

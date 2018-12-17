@@ -214,6 +214,10 @@ let identifier = function(parsedCode) {
     return parsedCode.name;
 };
 
+let literal = function(parsedCode) {
+    return parsedCode.value;
+};
+
 let initFor = function initFor(init) {
     let val = '';
     if(init.type === 'VariableDeclaration') {
@@ -250,7 +254,7 @@ let forStatement = function forStatement(parsedCode) {
 let mapper = {'BinaryExpression': binaryExpression,'UnaryExpression': unaryExpression, 'MemberExpression': memberExpression,
     'ExpressionStatement': expressionStatement, 'WhileStatement': whileAndIfStatement, 'IfStatement': whileAndIfStatement,
     'ReturnStatement': returnStatement, 'VariableDeclaration': varDeclaration, 'Identifier': identifier, 'BlockStatement': blockStatement,
-    'ForStatement': forStatement, 'ArrayExpression': arrayExpression, 'FunctionDeclaration': funcDeclaration,
+    'ForStatement': forStatement, 'ArrayExpression': arrayExpression, 'FunctionDeclaration': funcDeclaration, 'Literal': literal,
     'LogicalExpression': binaryExpression};
 
 let whileIfMapper = {'WhileStatement': whileStatement, 'IfStatement': ifStatement};
