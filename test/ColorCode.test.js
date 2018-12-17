@@ -41,4 +41,26 @@ describe('The Code Colorer', () => {
             'if ( x > y ){</span><br>return x;<br>} else {<br>return y;<br>}}<br><br><br>';
         test(codeToParse, '2,1', expected);
     });
+    it('should color in green conditions that are true', function () {
+        let codeToParse = 'function f(x) {\n' +
+            'let a=[1,2,3];\n' +
+            'x=a[0];\n' +
+            'if(x===1){\n' +
+            'return 1;\n' +
+            '}\n' +
+            '}';
+        let expected = 'function f(x) {<br>x = [1,2,3][0]<br><span style="color: green; display:inline-block;">if( x === 1 ){</span><br>return 1;<br>}}<br><br><br>';
+        test(codeToParse, '2,1', expected);
+    });
+    it('should color in green conditions that are true', function () {
+        let codeToParse = 'function f(x) {\n' +
+            'let a=[1,2,3];\n' +
+            'x[0]=a[0];\n' +
+            'if(x[0]===1){\n' +
+            'return 1;\n' +
+            '}\n' +
+            '}';
+        let expected = 'function f(x) {<br>x[0] = [1,2,3][0]<br><span style="color: green; display:inline-block;">if( x[0] === 1 ){</span><br>return 1;<br>}}<br><br><br>';
+        test(codeToParse, '[2,2]', expected);
+    });
 });

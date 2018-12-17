@@ -78,7 +78,7 @@ describe('The Symbolic Subtitutioner', () => {
             '}';
         let expected = 'function foo(x) {\n' +
             '\twhile ( x > 5 ) {\n' +
-            'x =  x + 1 \n' +
+            'x =   x + 1  \n' +
             '}}\n' +
             '\n';
         test(codeToParse, expected);
@@ -86,49 +86,49 @@ describe('The Symbolic Subtitutioner', () => {
 
     it('substituting a while function with empty line correctly', () => {
         let codeToParse = 'function foo(x) {\n' +
-            '\tlet a = x;\n\n\n' +
-            '\twhile (a>5) {\n' +
-            '\ta=a+1;\n\n' +
-            'x=a;\n\n' +
-            '}\n\n' +
+            ' let a = x;\n' +
+            ' while (a>5) {\n' +
+            '       a=a+1;\n' +
+            '       x=a;\n' +
+            ' }\n' +
             '}';
         let expected = 'function foo(x) {\n' +
-            '\twhile ( x > 5 ) {\n' +
-            'x =  x + 1 \n' +
+            ' while ( x > 5 ) {\n' +
+            'x =   x + 1  \n' +
             '}}\n' +
             '\n';
         test(codeToParse, expected);
     });
     it('substituting a while function with empty line correctly', () => {
         let codeToParse = 'function foo(x, y, z){\n' +
-            '    let a = x + 1;\n' +
-            '    let b = a + y;\n' +
-            '    let c = 0;\n' +
-            '    if (b < z) {\n' +
-            '        c = c + 5;\n' +
-            '        if(b<x) {\n' +
-            '            return a+b+c;\n' +
-            '        } else {\n' +
-            '            return c;        \n' +
-            '\t   } } else if (b < z * 2) {\n' +
-            '        c = c + x + 5;\n' +
-            '        return x + y + z + c;\n' +
-            '    } else {\n' +
-            '        c = c + z + 5;\n' +
-            '        return x + y + z + c;\n' +
-            '    }\n' +
-            '}';
+            '                let a = x + 1;\n' +
+            '                let b = a + y;\n' +
+            '                let c = 0;\n' +
+            '                if (b < z) {\n' +
+            '                    c = c + 5;\n' +
+            '                    if(b<x) {\n' +
+            '                        return a+b+c;\n' +
+            '                    } else {\n' +
+            '                        return c;        \n' +
+            '               } } else if (b < z * 2) {\n' +
+            '                    c = c + x + 5;\n' +
+            '                    return x + y + z + c;\n' +
+            '                } else {\n' +
+            '                    c = c + z + 5;\n' +
+            '                    return x + y + z + c;\n' +
+            '                }\n' +
+            '            }';
         let expected = 'function foo(x, y, z){\n' +
-            '    if (   x + 1 + y  < z ) {\n' +
-            '        if(   x + 1 + y  < x ) {\n' +
-            '            return    x + 1  +   x + 1 + y   +  5  ;\n' +
-            '        } else {\n' +
-            '            return  5 ;\n' +
-            '\t   } } else if (   x + 1 + y  <  z * 2  ) {\n' +
-            '        return    x + y  + z  +  x + 5  ;\n' +
-            '    } else {\n' +
-            '        return    x + y  + z  +  z + 5  ;\n' +
-            '}}\n' +
+            '                if (   x + 1 + y  < z ) {\n' +
+            '                    if(   x + 1 + y  < x ) {\n' +
+            '                        return    x + 1  +   x + 1 + y   +   0 + 5   ;\n' +
+            '                    } else {\n' +
+            '                        return   0 + 5  ;\n' +
+            '               } } else if (   x + 1 + y  <  z * 2  ) {\n' +
+            '                    return    x + y  + z  +    0 + x  + 5   ;\n' +
+            '                } else {\n' +
+            '                    return    x + y  + z  +    0 + z  + 5   ;\n' +
+            '}            }\n' +
             '\n';
         test(codeToParse, expected);
     });
@@ -164,6 +164,88 @@ describe('The Symbolic Subtitutioner', () => {
         let expected = 'function foo(x, y, z){\n' +
             '    return y;\n' +
             '}\n' +
+            '\n';
+        test(codeToParse, expected);
+    });
+    it('substituting a array expressions correctly', () => {
+        let codeToParse = 'function insertionSort (items) {\n' +
+            'let i=1;\n' +
+            '  while (i>0) {\n' +
+            '    let value = items[i];\n' +
+            '    let j=0;\n' +
+            '     while (j>0){\n' +
+            '      items[i+1] = items[j];\n' +
+            '      items[j ] = value;\n' +
+            '  }\n' +
+            '}\n' +
+            '  return items\n' +
+            '}';
+        let expected = 'function insertionSort (items) {\n' +
+            '  while ( 1 > 0 ) {\n' +
+            '     while ( 0 > 0 ){\n' +
+            'items[2] = items[0]\n' +
+            'items[0] = items[1]\n' +
+            '}}  return items;\n' +
+            '}\n' +
+            '\n';
+        test(codeToParse, expected);
+    });
+    it('substituting a local array correctly', () => {
+        let codeToParse = 'function f() {\n' +
+            'let a=[1,2,3];\n' +
+            'if(a[0]===1) {\n' +
+            'return 1;\n' +
+            '}\n' +
+            '}';
+        let expected = 'function f() {\n' +
+            'if( [1,2,3][0] === 1 ) {\n' +
+            'return 1;\n' +
+            '}}\n' +
+            '\n';
+        test(codeToParse, expected);
+    });
+    it('substituting a local array with identifier element correctly', () => {
+        let codeToParse = 'function f() {\n' +
+            'let b=1;\n' +
+            'let a=[b,2,3];\n' +
+            'if(a[0]===1) {\n' +
+            'return 1;\n' +
+            '}\n' +
+            '}';
+        let expected = 'function f() {\n' +
+            'if( [1,2,3][0] === 1 ) {\n' +
+            'return 1;\n' +
+            '}}\n' +
+            '\n';
+        test(codeToParse, expected);
+    });
+    it('substituting a local array with expression element correctly', () => {
+        let codeToParse = 'function f() {\n' +
+            'let b=1;\n' +
+            'let a=[b+1,2,3];\n' +
+            'if(a[0]===1) {\n' +
+            'return 1;\n' +
+            '}\n' +
+            '}';
+        let expected = 'function f() {\n' +
+            'if( [ 1+ 1 ,2,3][0] === 1 ) {\n' +
+            'return 1;\n' +
+            '}}\n' +
+            '\n';
+        test(codeToParse, expected);
+    });
+    it('substituting a local array element correctly', () => {
+        let codeToParse = 'function foo() {\n' +
+            '    let a = [1,2,3];\n' +
+            'a[2]=0;\n' +
+            'if(a[2]===0){\n' +
+            'return 1;\n' +
+            '}\n' +
+            ' }';
+        let expected = 'function foo() {\n' +
+            'if( [1,2,0][2] === 0 ){\n' +
+            'return 1;\n' +
+            '} }\n' +
             '\n';
         test(codeToParse, expected);
     });
